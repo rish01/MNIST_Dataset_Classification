@@ -188,5 +188,9 @@ if __name__ == '__main__':
             testError = np.mean(yhat != ytest)
             print("Test error     = ", testError)
 
+        # ----------------------------------------------- 1.5 CNN --------------------------------------------------- #
+        elif model == "CNN":
+            pass
+
     else:
         print("Unknown question: %s" % question)
