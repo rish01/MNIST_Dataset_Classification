@@ -64,7 +64,7 @@ class SVM_Multiclass_Max_Loss(SVM_Multiclass_Sum_Loss):
         Wx_i = W@x_i.T
 
         # Compute the function value
-        maxima = np.maximum(np.zeros((self.n_classes,1)), 1+Wx_i-Wx_i[y_i])
+        maxima = np.maximum(np.zeros((self.n_classes, 1)), 1+Wx_i-Wx_i[y_i])
         maxima[y_i] = 0
         f = np.max(maxima) + self.lammy/2 * np.linalg.norm(W) ** 2
         max_c = np.argmax(maxima)
