@@ -29,11 +29,11 @@ def log_sum_exp(Z):
 
 class NeuralNet():
     # uses sigmoid nonlinearity
-    def __init__(self, hidden_layer_sizes, lammy=1, max_iter=100, learning_rate_MLP_SGD=True):
+    def __init__(self, hidden_layer_sizes, lammy=1, max_iter=100, learning_rate_decay=False):
         self.hidden_layer_sizes = hidden_layer_sizes
         self.lammy = lammy
         self.max_iter = max_iter
-        self.learning_rate_MLP = learning_rate_MLP_SGD
+        self.learning_rate_decay = learning_rate_decay
 
     def funObj(self, weights_flat, X, y):
         weights = unflatten_weights(weights_flat, self.layer_sizes)
@@ -117,7 +117,7 @@ class NeuralNet():
         weights_flat = flatten_weights(weights)
 
         weights_flat_new, f = findMin.findMinSGD(self.funObj, weights_flat, epoch, minibatch_size, X, y, verbose=1,
-                                                 learning_rate_MLP=self.learning_rate_MLP)
+                                                 learning_rate_decay=self.learning_rate_decay)
 
         self.weights = unflatten_weights(weights_flat_new, self.layer_sizes)
 

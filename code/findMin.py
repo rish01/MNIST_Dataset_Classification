@@ -73,7 +73,7 @@ def findMin(funObj, w, maxEvals, *args, verbose=0):
     return w, f
 
 
-def findMinSGD(funObj, w, epoch, minibatch_size, X, y, verbose=0, learning_rate_MLP = False):
+def findMinSGD(funObj, w, epoch, minibatch_size, X, y, verbose=0, learning_rate_decay=True):
     """
     Uses gradient descent to optimize the objective function
 
@@ -103,13 +103,14 @@ def findMinSGD(funObj, w, epoch, minibatch_size, X, y, verbose=0, learning_rate_
         f_new, g_new = funObj(w_new, X_minibatch, y_minibatch)
         funEvals += 1
 
-        if learning_rate_MLP:
-            pass
+        if learning_rate_decay:
+            alpha = 0.001 / sqrt(funEvals)  # as recommended in lecture slides
+            # alpha = 0.001/(1+funEvals)    # as recommended in SVD gradient lecture slides
+        else:
+            alpha = 0.001
             # if funEvals % 500 == 0:
             #     alpha = alpha/sqrt(funEvals)
-        else:
-            alpha = 0.001/sqrt(funEvals)    # as recommended in lecture slides
-            # alpha = 0.001/(1+funEvals)    # as recommended in SVD gradient lecture slides
+
 
         # Print progress
         if verbose > 0:

@@ -171,7 +171,7 @@ if __name__ == '__main__':
         # ----------------------------------------------- 1.4 MLP --------------------------------------------------- #
         elif model == "MLP":
             hidden_layer_sizes = [50]
-            mlp_model = NeuralNet(hidden_layer_sizes, learning_rate_MLP_SGD=True, max_iter=500)
+            mlp_model = NeuralNet(hidden_layer_sizes, learning_rate_decay=False, max_iter=500)
 
             t = time.time()
             # mlp_model.fit(X, Y)
