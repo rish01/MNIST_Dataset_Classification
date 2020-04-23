@@ -5,6 +5,7 @@ import time
 
 import numpy as np
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.model_selection import KFold
 
 from knn import KNN
 from linear_model import LeastSquaresL2, LinearClassifierRobust, leastSquaresClassifier
@@ -25,7 +26,7 @@ if __name__ == '__main__':
     # question = io_args.question\
 
     question = "1"
-    model = "MLP"
+    model = "LINEAR_REGRESSION"
 
     if question == "1":
         with gzip.open(os.path.join('..', 'data', 'mnist.pkl.gz'), 'rb') as f:
@@ -33,10 +34,6 @@ if __name__ == '__main__':
 
         X, y = train_set
         Xtest, ytest = test_set
-
-        # Convert row vectors to column vectors
-        # y = y[:, None]
-        # ytest = ytest[:, None]
 
         binarizer = LabelBinarizer()
         Y = binarizer.fit_transform(y)
@@ -46,12 +43,46 @@ if __name__ == '__main__':
         X = X[:, non_zero_cols]
         Xtest = Xtest[:, non_zero_cols]
 
+        # Create k-folds for cross-validation
+        kf = KFold(n_splits=5)
+
         # --------------------------------------------- 1.1 KNN ---------------------------------------------------- #
         if model == "KNN":
-            k_values = np.asarray([1, 3, 5, 7])
-            y_pred = np.zeros(k_values.size)
+            random_rows = np.random.choice(X.shape[0], size=20000, replace=False)
+            X_subset = X[random_rows]
+            y_subset = y[random_rows]
 
-            for k in k_values:
+            k_values = np.arange(1, 10)
+            y_pred = np.zeros(k_values.size)
+            min_validation_err = 1
+            best_k = 3
+
+            if best_k is None:
+                for k in k_values:
+                    val_errors_per_fold = []
+                    for train, validate in kf.split(X_subset, y_subset):
+                        X_train = X_subset[train]
+                        y_train = y_subset[train]
+                        X_validate = X_subset[validate]
+                        y_validate = y_subset[validate]
+
+                        knn_model = KNN(k)
+                        knn_model.fit(X_train, y_train)
+
+                        # Validation Error for this fold
+                        y_pred = knn_model.predict(X_validate)
+                        val_errors_per_fold.append(np.mean(y_pred != y_validate))
+
+                    avg_validation_error = np.average(np.asarray(val_errors_per_fold))
+                    print("Validation test error: {:.4f} and k = {}".format(avg_validation_error, k))
+
+                    if avg_validation_error < min_validation_err:
+                        min_validation_err = avg_validation_error
+                        best_k = k
+
+            print(f"Best k-value: {best_k}")
+
+            if best_k is not None:
                 knn_model = KNN(k)
                 knn_model.fit(X, y)
 
@@ -67,6 +98,7 @@ if __name__ == '__main__':
 
         # --------------------------------------- 1.2 LINEAR REGRESSION -------------------------------------------- #
         elif model == "LINEAR_REGRESSION":
+            '''            
             # ------------------------------- 1.2.1 ROBUST LINEAR CLASSIFIER
             robust_linear_classifier_model = LinearClassifierRobust(lammy=0)
             robust_linear_classifier_model.fit(X, y)
@@ -78,21 +110,7 @@ if __name__ == '__main__':
             test_error = np.mean(y_pred != ytest)
             print("Robust Linear Classifier test error = {}".format(test_error))
 
-            # -------------------------------- 1.2.2 LEAST SQUARES CLASSIFIER
-            lammy_m = np.arange(0, 1, dtype=float)
-
-            for lammy_mm in lammy_m:
-                least_squares_classifier_model = leastSquaresClassifier(lammy=10**lammy_mm)
-                least_squares_classifier_model.fit(X, y)
-                y_pred = least_squares_classifier_model.predict(X)
-                tr_error = np.mean(y_pred != y)
-                print(f"Least Squares Classifier Training Error: {tr_error} with lammy: {10**lammy_mm}")
-
-                y_pred = least_squares_classifier_model.predict(Xtest)
-                test_error = np.mean(y_pred != ytest)
-                print(f"Least Squares Classifier Test Error: {test_error} with lammy: {10**lammy_mm}")
-
-            # -------------------- 1.2.3 LEAST SQUARES LINEAR REGRESSION WITH L2 REGULARIZATION
+            # -------------------- 1.2.2 LEAST SQUARES LINEAR REGRESSION WITH L2 REGULARIZATION
             least_squares_L2_model = LeastSquaresL2()
             least_squares_L2_model.fit(X, y, lammy=2)
             y_pred = np.round(least_squares_L2_model.predict(X))
@@ -101,72 +119,213 @@ if __name__ == '__main__':
 
             y_pred = np.round(least_squares_L2_model.predict(Xtest))
             test_error = np.mean(y_pred != ytest)
-            print(f"Least Squares L2 Test Error: {test_error}")
+            print(f"Least Squares L2 Test Error: {test_error}")           
 
+            # -------------------------------- 1.2.3 LEAST SQUARES CLASSIFIER
+            lammy_m = np.arange(-4, 1, dtype=float)
+            best_lammy_mm = 0
+            min_validation_err = 1
+
+            if best_lammy_mm is None:
+                for lammy_mm in lammy_m:
+                    val_errors_per_fold = []
+                    for train, validate in kf.split(X, y):
+                        X_train = X[train]
+                        y_train = y[train]
+                        X_validate = X[validate]
+                        y_validate = y[validate]
+
+                        least_squares_classifier_model = leastSquaresClassifier(lammy=10**lammy_mm)
+                        least_squares_classifier_model.fit(X_train, y_train)
+                        y_pred = least_squares_classifier_model.predict(X_validate)
+                        val_errors_per_fold.append(np.mean(y_pred != y_validate))
+
+                    avg_validation_error = np.average(np.asarray(val_errors_per_fold))
+                    print(f"Least Squares Classifier Validation Error: {avg_validation_error} with lammy: {10**lammy_mm}")
+
+                    if avg_validation_error < min_validation_err:
+                        min_validation_err = avg_validation_error
+                        best_lammy_mm = lammy_mm
+
+            if best_lammy_mm is not None:
+                print(f"Least Squares Classifier best lammy value: {10 ** best_lammy_mm}")
+                least_squares_classifier_model = leastSquaresClassifier(lammy=10 ** best_lammy_mm)
+                least_squares_classifier_model.fit(X, y)
+                y_pred = least_squares_classifier_model.predict(X)
+                tr_error = np.mean(y_pred != y)
+                print(f"Least Squares Classifier Training Error: {tr_error} with lammy: {10 ** best_lammy_mm}")
+
+                y_pred = least_squares_classifier_model.predict(Xtest)
+                test_error = np.mean(y_pred != ytest)
+                print(f"Least Squares Classifier Test Error: {test_error} with lammy: {10 ** best_lammy_mm}")
+            
             # ---------------------------- 1.2.4 KERNEL_REGRESSION - POLYNOMIAL
-            sigma_m = np.arange(-2, 3, dtype=float)
             lammy_m = np.arange(-4, 1, dtype=float)
             p = np.arange(1, 7)
             random_rows = np.random.choice(X.shape[0], size=2500, replace=False)
+            X_subset = X[random_rows]
+            y_subset = y[random_rows]
 
-            # for pp in p:
-            #   for lammy in lammies:
-            #     poly_kernel = kernelLinearClassifier(kernel_fun=kernel_poly, lammy=lammy, p=pp)
-            #     poly_kernel.fit(X[:5000], y[:5000])
-            #     test_error = np.mean(poly_kernel.predict(Xtest) != ytest)
-            #     print("Validation Error Poly Kernel {} for p = {} and lammy = {}".format(test_error, pp, lammy))
-            pp = 3
-            lammy_mm = 0
+            best_pp = 3
+            best_lammy_mm = 0
+            min_validation_err = 1
 
-            poly_kernel = kernelLinearClassifier(kernel_fun=kernel_poly, lammy=10**lammy_mm, p=pp)
-            poly_kernel.fit(X[random_rows, :], y[random_rows])
-            tr_error = np.mean(poly_kernel.predict(X) != y)
-            print("Training Error Poly Kernel {} for p = {} and lammy = {}".format(tr_error, pp, 10 ** lammy_mm))
+            if best_pp is None or best_lammy_mm is None:
+                for pp in p:
+                    for lammy_mm in lammy_m:
+                        val_errors_per_fold = []
+                        for train, validate in kf.split(X_subset, y_subset):
+                            X_train = X_subset[train]
+                            y_train = y_subset[train]
+                            X_validate = X_subset[validate]
+                            y_validate = y_subset[validate]
 
-            test_error = np.mean(poly_kernel.predict(Xtest) != ytest)
-            print("Test Error Poly Kernel {} for p = {} and lammy = {}".format(test_error, pp, 10**lammy_mm))
+                            poly_kernel = kernelLinearClassifier(kernel_fun=kernel_poly, lammy=lammy_mm, p=pp)
+                            poly_kernel.fit(X_train, y_train)
+                            val_errors_per_fold.append(np.mean(poly_kernel.predict(X_validate) != y_validate))
 
+                        avg_validation_error = np.average(np.asarray(val_errors_per_fold))
+                        print(
+                            f"Polynomial Kernel Validation Error: {avg_validation_error} with lammy: {10**lammy_mm} "
+                            f"and polynomial degree: {pp}")
+
+                        if avg_validation_error < min_validation_err:
+                            min_validation_err = avg_validation_error
+                            best_pp = pp
+                            best_lammy_mm = lammy_mm
+
+            random_rows = np.random.choice(X.shape[0], size=4500, replace=False)
+            if best_pp is not None and best_lammy_mm is not None:
+                print(f"Poly Kernel best degree: {best_pp} and best lammy: {10**best_lammy_mm}")
+                poly_kernel = kernelLinearClassifier(kernel_fun=kernel_poly, lammy=10**best_lammy_mm, p=best_pp)
+                poly_kernel.fit(X[random_rows], y[random_rows])
+
+                test_error = np.mean(poly_kernel.predict(Xtest) != ytest)
+                print(f"Test Error Poly Kernel: {test_error} for p = {best_pp} and lammy = {10**best_lammy_mm}")
+            '''
             # ------------------------------ 1.2.4 KERNEL_REGRESSION - RBF
-            # for sigma_mm in sigma_m:
-            #   for lammy_mm in lammy_m:
-            #     RBF_kernel = kernelLinearClassifier(kernel_fun=kernel_RBF, lammy=10**lammy_mm, sigma=10**sigma_mm)
-            #     RBF_kernel.fit(X[:4500], y[:4500])
-            #     test_error = np.mean(RBF_kernel.predict(Xtest) != ytest)
-            #     print("Test Error RBF Kernel {} for sigma = {} and lammy = {}".format(test_error, 10 ** sigma_mm,
-            #                                                                           10 ** lammy_mm))
+            lammy_m = np.arange(-4, 1, dtype=float)
+            sigma_m = np.arange(-2, 3, dtype=float)
+            random_rows = np.random.choice(X.shape[0], size=2500, replace=False)
+            X_subset = X[random_rows]
+            y_subset = y[random_rows]
 
-            lammy_mm = -2.0
-            sigma_mm = 1.0
-            RBF_kernel = kernelLinearClassifier(kernel_fun=kernel_RBF, lammy=10**lammy_mm, sigma=10**sigma_mm)
-            RBF_kernel.fit(X[random_rows, :], y[random_rows])
-            tr_error = np.mean(RBF_kernel.predict(X) != y)
-            print("Training Error RBF Kernel {} for sigma = {} and lammy = {}".format(test_error, 10 ** sigma_mm,
-                                                                                  10 ** lammy_mm))
-            test_error = np.mean(RBF_kernel.predict(Xtest) != ytest)
-            print("Test Error RBF Kernel {} for sigma = {} and lammy = {}".format(test_error, 10**sigma_mm, 10**lammy_mm))
+            best_sigma_mm = None
+            best_lammy_mm = None
+            # lammy_mm = -2.0
+            # sigma_mm = 1.0
+            min_validation_err = 1
+
+            if best_sigma_mm is None and best_lammy_mm is None:
+                for sigma_mm in sigma_m:
+                    for lammy_mm in lammy_m:
+                        val_errors_per_fold = []
+                        for train, validate in kf.split(X_subset, y_subset):
+                            X_train = X_subset[train]
+                            y_train = y_subset[train]
+                            X_validate = X_subset[validate]
+                            y_validate = y_subset[validate]
+
+                            RBF_kernel = kernelLinearClassifier(kernel_fun=kernel_RBF, lammy=10**lammy_mm, sigma=10**sigma_mm)
+                            RBF_kernel.fit(X_train, y_train)
+                            val_errors_per_fold.append(np.mean(RBF_kernel.predict(X_validate) != y_validate))
+
+                        avg_validation_error = np.average(np.asarray(val_errors_per_fold))
+                        print(
+                            f"RBF Kernel Validation Error: {avg_validation_error} with sigma: {10 ** sigma_mm} "
+                            f"and lammy: {10**lammy_mm}")
+
+                        if avg_validation_error < min_validation_err:
+                            min_validation_err = avg_validation_error
+                            best_sigma_mm = sigma_mm
+                            best_lammy_mm = lammy_mm
+
+            random_rows = np.random.choice(X.shape[0], size=5000, replace=False)
+            if best_sigma_mm is not None and best_lammy_mm is not None:
+                print(f"RBF Kernel best sigma: {10**best_sigma_mm} and best lammy: {10 ** best_lammy_mm}")
+                RBF_kernel = kernelLinearClassifier(kernel_fun=kernel_RBF, lammy=10**best_lammy_mm,
+                                                    sigma=10**best_sigma_mm)
+                RBF_kernel.fit(X[random_rows], y[random_rows])
+                tr_error = np.mean(RBF_kernel.predict(X) != y)
+                print("Training Error RBF Kernel {} for sigma = {} and lammy = {}".format(tr_error,
+                                                                                          10 ** best_sigma_mm,
+                                                                                          10 ** best_lammy_mm))
+                test_error = np.mean(RBF_kernel.predict(Xtest) != ytest)
+                print("Test Error RBF Kernel {} for sigma = {} and lammy = {}".format(test_error, 10 ** best_sigma_mm,
+                                                                                      10 ** best_lammy_mm))
 
         # ----------------------------------------------- 1.3 SVM --------------------------------------------------- #
         elif model == "SVM":
-            # lammy_m = np.arange(-4, 1, dtype=float)     # Trialing different values of lammy_m
-            lammy_m = [-2]
+            lammy_m = np.arange(-4, 1, dtype=float)     # Trialing different values of lammy_m
+            # lammy_m = [-2]
 
             # -------------------- 1.3.1 MULTI-CLASS SVM - SUM LOSS WITH L2 REGULARIZATION
-            for lammy_mm in lammy_m:
-                multi_class_SVM_Sum_Loss_model = SVM_Multiclass_Sum_Loss(lammy=10 ** lammy_mm, epoch=2, verbose=0)
+            best_lammy_mm = None
+            min_validation_err = 1
+
+            if best_lammy_mm is None:
+                for lammy_mm in lammy_m:
+                    val_errors_per_fold = []
+                    for train, validate in kf.split(X, y):
+                        X_train = X[train]
+                        y_train = y[train]
+                        X_validate = X[validate]
+                        y_validate = y[validate]
+
+                        multi_class_SVM_Sum_Loss_model = SVM_Multiclass_Sum_Loss(lammy=10 ** lammy_mm, epoch=2, verbose=0)
+                        multi_class_SVM_Sum_Loss_model.fit(X_train, y_train)
+                        val_errors_per_fold.append(np.mean(multi_class_SVM_Sum_Loss_model.predict(X_validate) != y_validate))
+
+                    avg_validation_error = np.average(np.asarray(val_errors_per_fold))
+                    print(f"SVM SUM Loss Validation Error: {avg_validation_error} with lammy: {10 ** lammy_mm}")
+
+                    if avg_validation_error < min_validation_err:
+                        min_validation_err = avg_validation_error
+                        best_lammy_mm = lammy_mm
+
+            if best_lammy_mm is not None:
+                print(f"SVM SUM Loss best lammy: {10**best_lammy_mm}")
+                multi_class_SVM_Sum_Loss_model = SVM_Multiclass_Sum_Loss(lammy=10 ** best_lammy_mm, epoch=2, verbose=0)
                 multi_class_SVM_Sum_Loss_model.fit(X, y)
                 tr_error = np.mean(multi_class_SVM_Sum_Loss_model.predict(X) != y)
                 test_error = np.mean(multi_class_SVM_Sum_Loss_model.predict(Xtest) != ytest)
-                print("Training Error SVM - SUM Loss = {} with lammy = {}".format(tr_error, 10**lammy_mm))
-                print("Test Error SVM - SUM Loss = {} with lammy = {}".format(test_error, 10**lammy_mm))
+                print("Training Error SVM - SUM Loss: {} with lammy: {}".format(tr_error, 10 ** best_lammy_mm))
+                print("Test Error SVM - SUM Loss: {} with lammy: {}".format(test_error, 10 ** best_lammy_mm))
 
             # --------------------- 1.3.2 MULTI-CLASS SVM - MAX LOSS WITH L2 REGULARIZATION
-            for lammy_mm in lammy_m:
-                multi_class_SVM_Max_Loss_model = SVM_Multiclass_Max_Loss(lammy=10 ** lammy_mm, epoch=1, verbose=0)
+            best_lammy_mm = None
+            min_validation_err = 1
+
+            if best_lammy_mm is None:
+                for lammy_mm in lammy_m:
+                    val_errors_per_fold = []
+                    for train, validate in kf.split(X, y):
+                        X_train = X[train]
+                        y_train = y[train]
+                        X_validate = X[validate]
+                        y_validate = y[validate]
+
+                        multi_class_SVM_Max_Loss_model = SVM_Multiclass_Max_Loss(lammy=10 ** lammy_mm, epoch=2,
+                                                                                 verbose=0)
+                        multi_class_SVM_Max_Loss_model.fit(X_train, y_train)
+                        val_errors_per_fold.append(
+                            np.mean(multi_class_SVM_Max_Loss_model.predict(X_validate) != y_validate))
+
+                    avg_validation_error = np.average(np.asarray(val_errors_per_fold))
+                    print(f"SVM SUM Loss Validation Error: {avg_validation_error} with lammy: {10 ** lammy_mm}")
+
+                    if avg_validation_error < min_validation_err:
+                        min_validation_err = avg_validation_error
+                        best_lammy_mm = lammy_mm
+
+            if best_lammy_mm is not None:
+                print(f"SVM MAX Loss best lammy: {10 ** best_lammy_mm}")
+                multi_class_SVM_Max_Loss_model = SVM_Multiclass_Max_Loss(lammy=10 ** best_lammy_mm, epoch=2, verbose=0)
                 multi_class_SVM_Max_Loss_model.fit(X, y)
                 tr_error = np.mean(multi_class_SVM_Max_Loss_model.predict(X) != y)
                 test_error = np.mean(multi_class_SVM_Max_Loss_model.predict(Xtest) != ytest)
-                print("Training Error SVM - MAX Loss = {} with lammy = {}".format(tr_error, 10**lammy_mm))
-                print("Test Error SVM - MAX Loss = {} with lammy = {}".format(test_error, 10**lammy_mm))
+                print("Training Error SVM - MAX Loss: {} with lammy: {}".format(tr_error, 10 ** best_lammy_mm))
+                print("Test Error SVM - MAX Loss: {} with lammy: {}".format(test_error, 10 ** best_lammy_mm))
 
         # ----------------------------------------------- 1.4 MLP --------------------------------------------------- #
         elif model == "MLP":
@@ -191,6 +350,9 @@ if __name__ == '__main__':
         # ----------------------------------------------- 1.5 CNN --------------------------------------------------- #
         elif model == "CNN":
             pass
+
+        else:
+            print("Unknown model: %s" % model)
 
     else:
         print("Unknown question: %s" % question)

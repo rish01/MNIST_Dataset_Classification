@@ -1,5 +1,6 @@
 import numpy as np
-from numpy.linalg import solve, inv
+# from numpy.linalg import solve, inv
+from scipy.linalg import inv
 import findMin
 from scipy.optimize import approx_fprime
 import utils
@@ -42,6 +43,7 @@ class kernelLinearClassifier():
         self.U = np.zeros((self.n_classes, n))
 
         K = self.kernel_fun(X,X, **self.kernel_args)
+        self.K = K
 
         for i in range(self.n_classes):
             ytmp = y.copy().astype(float)
