@@ -6,6 +6,10 @@ import time
 import numpy as np
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.model_selection import KFold
+# from keras.models import Sequential
+# from keras.layers import Dense, Dropout, Activation, Flatten
+# from keras.layers import Convolution2D, MaxPooling2D
+# from keras.utils import np_utils
 
 from knn import KNN
 from linear_model import LeastSquaresL2, LinearClassifierRobust, leastSquaresClassifier
@@ -26,7 +30,7 @@ if __name__ == '__main__':
     # question = io_args.question\
 
     question = "1"
-    model = "LINEAR_REGRESSION"
+    model = "MLP"
 
     if question == "1":
         with gzip.open(os.path.join('..', 'data', 'mnist.pkl.gz'), 'rb') as f:
@@ -260,7 +264,7 @@ if __name__ == '__main__':
             # lammy_m = [-2]
 
             # -------------------- 1.3.1 MULTI-CLASS SVM - SUM LOSS WITH L2 REGULARIZATION
-            best_lammy_mm = None
+            best_lammy_mm = -2
             min_validation_err = 1
 
             if best_lammy_mm is None:
@@ -272,7 +276,7 @@ if __name__ == '__main__':
                         X_validate = X[validate]
                         y_validate = y[validate]
 
-                        multi_class_SVM_Sum_Loss_model = SVM_Multiclass_Sum_Loss(lammy=10 ** lammy_mm, epoch=2, verbose=0)
+                        multi_class_SVM_Sum_Loss_model = SVM_Multiclass_Sum_Loss(lammy=10 ** lammy_mm, epoch=0.1, verbose=0)
                         multi_class_SVM_Sum_Loss_model.fit(X_train, y_train)
                         val_errors_per_fold.append(np.mean(multi_class_SVM_Sum_Loss_model.predict(X_validate) != y_validate))
 
@@ -285,7 +289,7 @@ if __name__ == '__main__':
 
             if best_lammy_mm is not None:
                 print(f"SVM SUM Loss best lammy: {10**best_lammy_mm}")
-                multi_class_SVM_Sum_Loss_model = SVM_Multiclass_Sum_Loss(lammy=10 ** best_lammy_mm, epoch=2, verbose=0)
+                multi_class_SVM_Sum_Loss_model = SVM_Multiclass_Sum_Loss(lammy=10 ** best_lammy_mm, epoch=5, verbose=0)
                 multi_class_SVM_Sum_Loss_model.fit(X, y)
                 tr_error = np.mean(multi_class_SVM_Sum_Loss_model.predict(X) != y)
                 test_error = np.mean(multi_class_SVM_Sum_Loss_model.predict(Xtest) != ytest)
@@ -293,7 +297,7 @@ if __name__ == '__main__':
                 print("Test Error SVM - SUM Loss: {} with lammy: {}".format(test_error, 10 ** best_lammy_mm))
 
             # --------------------- 1.3.2 MULTI-CLASS SVM - MAX LOSS WITH L2 REGULARIZATION
-            best_lammy_mm = None
+            best_lammy_mm = -1
             min_validation_err = 1
 
             if best_lammy_mm is None:
@@ -305,7 +309,7 @@ if __name__ == '__main__':
                         X_validate = X[validate]
                         y_validate = y[validate]
 
-                        multi_class_SVM_Max_Loss_model = SVM_Multiclass_Max_Loss(lammy=10 ** lammy_mm, epoch=2,
+                        multi_class_SVM_Max_Loss_model = SVM_Multiclass_Max_Loss(lammy=10 ** lammy_mm, epoch=0.1,
                                                                                  verbose=0)
                         multi_class_SVM_Max_Loss_model.fit(X_train, y_train)
                         val_errors_per_fold.append(
@@ -320,7 +324,7 @@ if __name__ == '__main__':
 
             if best_lammy_mm is not None:
                 print(f"SVM MAX Loss best lammy: {10 ** best_lammy_mm}")
-                multi_class_SVM_Max_Loss_model = SVM_Multiclass_Max_Loss(lammy=10 ** best_lammy_mm, epoch=2, verbose=0)
+                multi_class_SVM_Max_Loss_model = SVM_Multiclass_Max_Loss(lammy=10 ** best_lammy_mm, epoch=5, verbose=0)
                 multi_class_SVM_Max_Loss_model.fit(X, y)
                 tr_error = np.mean(multi_class_SVM_Max_Loss_model.predict(X) != y)
                 test_error = np.mean(multi_class_SVM_Max_Loss_model.predict(Xtest) != ytest)
@@ -334,7 +338,7 @@ if __name__ == '__main__':
 
             t = time.time()
             # mlp_model.fit(X, Y)
-            mlp_model.fitWithSGD(X, Y, epoch=40, minibatch_size=2500)
+            mlp_model.fitWithSGD(X, Y, epoch=100, minibatch_size=2500)
             print("Fitting took %d seconds" % (time.time() - t))
 
             # Compute training error

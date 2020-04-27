@@ -10,7 +10,6 @@ class SVM_Multiclass_Sum_Loss():
         self.epoch = epoch
         self.verbose = verbose
 
-    @time_me
     def fit(self, X, y):
         n, d = X.shape
         k = np.unique(y).size

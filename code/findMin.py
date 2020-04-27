@@ -83,6 +83,7 @@ def findMinSGD(funObj, w, epoch, minibatch_size, X, y, verbose=0, learning_rate_
     # Parameters of the Optimization
     num_iterations = X.shape[0]/minibatch_size * epoch
     alpha = 0.001
+    beta = 0.9
 
     # Obtain the initial random minibatch from the training set
     minibatch_indices = np.random.choice(X.shape[0], size=minibatch_size, replace=False)
@@ -90,12 +91,14 @@ def findMinSGD(funObj, w, epoch, minibatch_size, X, y, verbose=0, learning_rate_
     y_minibatch = y[minibatch_indices, :]
 
     # Evaluate the initial function value and gradient
+    w_prev = 0
     f, g = funObj(w, X_minibatch, y_minibatch)
     funEvals = 1
 
     while True:
         # Update w_new
         w_new = w - alpha * g
+        w_new += beta * (w - w_prev)  # Adding momentum term
 
         minibatch_indices = np.random.choice(X.shape[0], size=minibatch_size, replace=False)
         X_minibatch = X[minibatch_indices, :]
@@ -120,6 +123,8 @@ def findMinSGD(funObj, w, epoch, minibatch_size, X, y, verbose=0, learning_rate_
             print("alpha: %.7f" % (alpha))
 
         # Update parameters/function/gradient
+        w_prev = w
+
         w = w_new
         f = f_new
         g = g_new
