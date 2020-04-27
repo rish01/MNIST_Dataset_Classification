@@ -88,7 +88,7 @@ class NeuralNet():
         scale = 0.01
         weights = list()
         for i in range(len(self.layer_sizes)-1):
-            W = scale * np.random.randn(self.layer_sizes[i+1],self.layer_sizes[i])/np.sqrt(self.layer_sizes[i+1]/2)
+            W = scale * np.random.randn(self.layer_sizes[i+1],self.layer_sizes[i])/np.sqrt(self.layer_sizes[i]/2)
             b = scale * np.random.randn(1,self.layer_sizes[i+1])
             weights.append((W,b))
         weights_flat = flatten_weights(weights)
@@ -110,7 +110,7 @@ class NeuralNet():
         scale = 0.01
         weights = list()
         for i in range(len(self.layer_sizes) - 1):
-            W = scale * np.random.randn(self.layer_sizes[i + 1], self.layer_sizes[i])
+            W = scale * np.random.randn(self.layer_sizes[i + 1], self.layer_sizes[i])/np.sqrt(self.layer_sizes[i]/2)
             b = scale * np.random.randn(1, self.layer_sizes[i + 1])
             weights.append((W, b))
         weights_flat = flatten_weights(weights)

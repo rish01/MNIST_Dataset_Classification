@@ -1,4 +1,4 @@
-# CITATION: This code is adapted from Mahan Fathi's Stanford's CS231 Assignment 2 repo
+# CITATION: Most of the code in this file is adapted from Mahan Fathi's Stanford's CS231 Assignment 2 repo
 # <Mahan Fathi> (Sep, 2017) CS231/blob/master/assignment2/cs231n/layers.py.
 #       https://github.com/MahanFathi/CS231/blob/master/assignment2/cs231n/layers.py
 
@@ -189,9 +189,72 @@ def max_pool_layer_backward(dupstream, cache):
         for c in range(C):
             for j in range(H_prime):
                 for i in range(W_prime):
+                    # Determine the index of the cell in x-space spanned by max pool filter containing the max value
                     ind = np.argmax(x[n, c, j * stride:j * stride + HH, i * stride:i * stride + WW])
                     HH_ind, WW_ind = np.unravel_index(ind, (HH, WW))
                     dx[n, c, j * stride:j * stride + HH, i * stride:i * stride + WW][HH_ind, WW_ind] = dupstream[n, c, j, i]
 
     return dx
 
+
+def fully_connected_layer_forward(x, w, b):
+    '''
+    Computes the output layer based on the inputs x, w, and b (bias)
+    :param x: Input layer of shape N x d1 x d2 x ... x dk which contains N examples with each example x[i] having shape
+              d1 x d2 x ... x dk. This layer will be converted to a matrix of shape N x D
+    :param w: Matrix of shape D x M where M is the number of units in the first fully connected layers
+    :param b: Array of shape (M,) containing the bias values
+    :return: out: output layer of shape N x M
+    :return: cache: tuple containing x, w, b
+    '''
+
+    # Reshape the x layer to be a matrix of dimensions N x D and compute the output layer
+    x = x.reshape(x.shape[0], -1)
+    out = x@w + b
+    cache = (x, w, b)
+    return out, cache
+
+
+def fully_connected_layer_backward(dupstream, cache):
+    '''
+    Computes the gradients of the fully connected layer with respect to x, w, and b (bias)
+    :param dupstream: gradient flowing from upstream the network and of the dimensions N x M, where M is the number of
+                      hidden units in the fully connected layer
+    :param cache: tuple containing x, w, b
+    :return: dx: gradient with respect to x (N, D) or (N, d1, d2, ...., dk)
+    :return: dw: gradient with respect to w (D, M)
+    :return: db: gradient with respect to b (M,)
+    '''
+
+    # Obtain the matrices from inputs
+    x, w, b = cache
+
+    # These gradients are easy to determine if this simple X@W + b computation is plotted on a computation graph and
+    # backpropagation technique is used
+    dx = (dupstream@w.T).reshape(x.shape)        # resulting matrix is N x D or N x d1 x d2 x ... x dk depending on
+                                                 # whether this layer was connected to a convolutional layer
+    dw = x.reshape(x.shape[0], -1).T@dupstream   # resulting matrix is D x M
+    db = np.sum(dupstream, axis=0)               # resulting array is of shape (M,)
+
+    return dx, dw, db
+
+
+def log_sum_exp(Z):
+    Z_max = np.max(Z,axis=1)
+    return Z_max + np.log(np.sum(np.exp(Z - Z_max[:,None]), axis=1)) # per-colmumn max
+
+
+def softmax_loss(x, y):
+    '''
+    Computes the softmax loss and gradient for the final softmax classification layer
+    :param x: Prediction matrix of shape N x C, where C is the number of classes to be predicted from
+    :param y: Matrix of shape N x C, which contains value of 1 (or True) in the correct class column of each example
+    :return: loss: scalar value of the softmax loss
+    :return: dx: gradient with respect to the input matrix x
+    '''
+
+    tmp = np.sum(np.exp(x), axis=1)
+    loss = -np.sum(x[y.astype(bool)] - log_sum_exp(x))
+    dx = np.exp(x) / tmp[:, None] - y
+
+    return loss, dx

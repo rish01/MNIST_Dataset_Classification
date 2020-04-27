@@ -338,7 +338,7 @@ if __name__ == '__main__':
 
             t = time.time()
             # mlp_model.fit(X, Y)
-            mlp_model.fitWithSGD(X, Y, epoch=100, minibatch_size=2500)
+            mlp_model.fitWithSGD(X, Y, epoch=40, minibatch_size=2500)
             print("Fitting took %d seconds" % (time.time() - t))
 
             # Compute training error
