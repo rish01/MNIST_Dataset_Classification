@@ -16,6 +16,7 @@ from linear_model import LeastSquaresL2, LinearClassifierRobust, leastSquaresCla
 from kernelRegression import kernelLinearClassifier, kernel_poly, kernel_RBF
 from svm_multiclass import SVM_Multiclass_Sum_Loss, SVM_Multiclass_Max_Loss
 from neural_net import NeuralNet
+from cnn import BasicCNN
 
 
 def load_dataset(filename):
@@ -30,7 +31,7 @@ if __name__ == '__main__':
     # question = io_args.question\
 
     question = "1"
-    model = "MLP"
+    model = "CNN"
 
     if question == "1":
         with gzip.open(os.path.join('..', 'data', 'mnist.pkl.gz'), 'rb') as f:
@@ -50,7 +51,9 @@ if __name__ == '__main__':
         # Create k-folds for cross-validation
         kf = KFold(n_splits=5)
 
+        ###############################################################################################################
         # --------------------------------------------- 1.1 KNN ---------------------------------------------------- #
+        ###############################################################################################################
         if model == "KNN":
             random_rows = np.random.choice(X.shape[0], size=20000, replace=False)
             X_subset = X[random_rows]
@@ -100,10 +103,12 @@ if __name__ == '__main__':
                 test_error = np.mean(y_pred != ytest)
                 print("KNN test error: {:.3f} and k = {}".format(test_error, k))
 
-        # --------------------------------------- 1.2 LINEAR REGRESSION -------------------------------------------- #
+        ###############################################################################################################
+        # --------------------------------------- 1.2 LINEAR REGRESSION --------------------------------------------- #
+        ###############################################################################################################
         elif model == "LINEAR_REGRESSION":
             '''            
-            # ------------------------------- 1.2.1 ROBUST LINEAR CLASSIFIER
+            # ------------------------------- 1.2.1 ROBUST LINEAR CLASSIFIER ---------------------------------------- #
             robust_linear_classifier_model = LinearClassifierRobust(lammy=0)
             robust_linear_classifier_model.fit(X, y)
             y_pred = robust_linear_classifier_model.predict(X)
@@ -114,7 +119,7 @@ if __name__ == '__main__':
             test_error = np.mean(y_pred != ytest)
             print("Robust Linear Classifier test error = {}".format(test_error))
 
-            # -------------------- 1.2.2 LEAST SQUARES LINEAR REGRESSION WITH L2 REGULARIZATION
+            # -------------------- 1.2.2 LEAST SQUARES LINEAR REGRESSION WITH L2 REGULARIZATION --------------------- #
             least_squares_L2_model = LeastSquaresL2()
             least_squares_L2_model.fit(X, y, lammy=2)
             y_pred = np.round(least_squares_L2_model.predict(X))
@@ -125,7 +130,7 @@ if __name__ == '__main__':
             test_error = np.mean(y_pred != ytest)
             print(f"Least Squares L2 Test Error: {test_error}")           
 
-            # -------------------------------- 1.2.3 LEAST SQUARES CLASSIFIER
+            # -------------------------------- 1.2.3 LEAST SQUARES CLASSIFIER --------------------------------------- #
             lammy_m = np.arange(-4, 1, dtype=float)
             best_lammy_mm = 0
             min_validation_err = 1
@@ -163,7 +168,7 @@ if __name__ == '__main__':
                 test_error = np.mean(y_pred != ytest)
                 print(f"Least Squares Classifier Test Error: {test_error} with lammy: {10 ** best_lammy_mm}")
             
-            # ---------------------------- 1.2.4 KERNEL_REGRESSION - POLYNOMIAL
+            # ---------------------------- 1.2.4 KERNEL_REGRESSION - POLYNOMIAL ------------------------------------- #
             lammy_m = np.arange(-4, 1, dtype=float)
             p = np.arange(1, 7)
             random_rows = np.random.choice(X.shape[0], size=2500, replace=False)
@@ -207,7 +212,8 @@ if __name__ == '__main__':
                 test_error = np.mean(poly_kernel.predict(Xtest) != ytest)
                 print(f"Test Error Poly Kernel: {test_error} for p = {best_pp} and lammy = {10**best_lammy_mm}")
             '''
-            # ------------------------------ 1.2.4 KERNEL_REGRESSION - RBF
+
+            # ------------------------------ 1.2.4 KERNEL_REGRESSION - RBF ------------------------------------------ #
             lammy_m = np.arange(-4, 1, dtype=float)
             sigma_m = np.arange(-2, 3, dtype=float)
             random_rows = np.random.choice(X.shape[0], size=2500, replace=False)
@@ -258,12 +264,14 @@ if __name__ == '__main__':
                 print("Test Error RBF Kernel {} for sigma = {} and lammy = {}".format(test_error, 10 ** best_sigma_mm,
                                                                                       10 ** best_lammy_mm))
 
+        ###############################################################################################################
         # ----------------------------------------------- 1.3 SVM --------------------------------------------------- #
+        ###############################################################################################################
         elif model == "SVM":
             lammy_m = np.arange(-4, 1, dtype=float)     # Trialing different values of lammy_m
             # lammy_m = [-2]
 
-            # -------------------- 1.3.1 MULTI-CLASS SVM - SUM LOSS WITH L2 REGULARIZATION
+            # -------------------- 1.3.1 MULTI-CLASS SVM - SUM LOSS WITH L2 REGULARIZATION -------------------------- #
             best_lammy_mm = -2
             min_validation_err = 1
 
@@ -296,7 +304,7 @@ if __name__ == '__main__':
                 print("Training Error SVM - SUM Loss: {} with lammy: {}".format(tr_error, 10 ** best_lammy_mm))
                 print("Test Error SVM - SUM Loss: {} with lammy: {}".format(test_error, 10 ** best_lammy_mm))
 
-            # --------------------- 1.3.2 MULTI-CLASS SVM - MAX LOSS WITH L2 REGULARIZATION
+            # --------------------- 1.3.2 MULTI-CLASS SVM - MAX LOSS WITH L2 REGULARIZATION ------------------------- #
             best_lammy_mm = -1
             min_validation_err = 1
 
@@ -331,7 +339,10 @@ if __name__ == '__main__':
                 print("Training Error SVM - MAX Loss: {} with lammy: {}".format(tr_error, 10 ** best_lammy_mm))
                 print("Test Error SVM - MAX Loss: {} with lammy: {}".format(test_error, 10 ** best_lammy_mm))
 
+
+        ###############################################################################################################
         # ----------------------------------------------- 1.4 MLP --------------------------------------------------- #
+        ###############################################################################################################
         elif model == "MLP":
             hidden_layer_sizes = [50]
             mlp_model = NeuralNet(hidden_layer_sizes, learning_rate_decay=False, max_iter=500)
@@ -343,17 +354,45 @@ if __name__ == '__main__':
 
             # Compute training error
             yhat = mlp_model.predict(X)
-            trainError = np.mean(yhat != y)
-            print("Training error = ", trainError)
+            tr_error = np.mean(yhat != y)
+            print("Training error = ", tr_error)
 
             # Compute test error
             yhat = mlp_model.predict(Xtest)
-            testError = np.mean(yhat != ytest)
-            print("Test error     = ", testError)
+            test_error = np.mean(yhat != ytest)
+            print("Test error     = ", test_error)
 
+
+        ###############################################################################################################
         # ----------------------------------------------- 1.5 CNN --------------------------------------------------- #
+        ###############################################################################################################
+
+        # CITATION: The code for CNN is adapted from Mahan Fathi's Stanford's CS231 Assignment 2 repo
+        # https://github.com/MahanFathi/CS231/blob/master/assignment2/cs231n/
+
         elif model == "CNN":
-            pass
+            X, y = train_set
+            Xtest, ytest = test_set
+
+            cnn_model = BasicCNN(
+                input_dim=(1, 28, 28),
+                epoch=1,
+                minibatch_size=2,
+                verbose=1,
+                learning_rate_decay=False
+            )
+
+            cnn_model.fit(X, Y)
+
+            # Compute training error
+            yhat = cnn_model.predict(X)
+            tr_error = np.mean(yhat != y)
+            print("Training error = ", tr_error)
+
+            # Compute test error
+            yhat = cnn_model.predict(Xtest)
+            test_error = np.mean(yhat != ytest)
+            print("Test error     = ", test_error)
 
         else:
             print("Unknown model: %s" % model)

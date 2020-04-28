@@ -43,7 +43,7 @@ def conv_layer_forward(x, w, b, stride, pad):
                     # Multiply each cell in the region occupied by the filter with the corresponding filter value, sum
                     # those multiplied values, and add filter value to the summed value
                     out[n, f, j, i] = (x_padded[n, :, j*stride:j*stride+HH, i*stride:i*stride+HH] * w[f,:,:,:]).sum() \
-                                      + b[f]
+                                      + b[:, f]
 
     cache = (x, w, b, stride, pad)
 
@@ -84,7 +84,7 @@ def conv_layer_backward(dupstream, cache):
         for f in range(F):
             # In computational graph, at an addition node, the upstream gradient is distributed to both input nodes
             # in this case, the input nodes are b and products of w and x
-            db[f] += dupstream[n, f].sum()
+            db[:, f] += dupstream[n, f].sum()
             for j in range(0, H_prime):
                 for i in range(0, W_prime):
                     # In computational graph, the gradients for inputs to multiplication node are simply the products of
@@ -122,7 +122,7 @@ def relu_layer_backward(dupstream, cache):
     x = cache
 
     # At the max node in a computational graph for RelU, the gradient only flows to the x input value if it is > 0
-    dx = dupstream[x > 0]
+    dx = (x>0)*dupstream
 
     return dx
 
@@ -156,7 +156,7 @@ def max_pool_layer_forward(x, pool_height, pool_width, stride):
     for n in range(N):
         for j in range(H_prime):
             for i in range(W_prime):
-                out[n, :, j, i] = np.amax(x[n, :, j*stride:j*stride+HH, i*stride:i*stride+WW], axis=(2, 3))
+                out[n, :, j, i] = np.amax(x[n, :, j*stride:j*stride+HH, i*stride:i*stride+WW], axis=(-1, -2))
 
     cache = (x, pool_height, pool_width, stride)
     return out, cache
@@ -165,7 +165,7 @@ def max_pool_layer_forward(x, pool_height, pool_width, stride):
 def max_pool_layer_backward(dupstream, cache):
     '''
     Computes the gradient of the max pooling layer with respect to x
-    :param dupstream: Gradient of from upstream the network
+    :param dupstream: Gradient of max pool layer from upstream the network
     :param cache: tuple containing x, pool_height, pool_width, stride
     :return: dx: gradient of max pool layer with respect to x
     '''
@@ -209,8 +209,7 @@ def fully_connected_layer_forward(x, w, b):
     '''
 
     # Reshape the x layer to be a matrix of dimensions N x D and compute the output layer
-    x = x.reshape(x.shape[0], -1)
-    out = x@w + b
+    out = x.reshape(x.shape[0], -1).dot(w) + b
     cache = (x, w, b)
     return out, cache
 
