@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2020.1.6)  27 APR 2020 00:34
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2020.1.6)  28 APR 2020 23:56
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -667,33 +667,38 @@ Package natbib Warning: Citation `wood2020planning' on page 3 undefined on inpu
 t line 118.
 
 No file finalExam.bbl.
-[3] [4] [5] [6]
+[3]
+Underfull \hbox (badness 10000) in paragraph at lines 146--150
+
+ []
+
+[4] [5] [6] [7]
 
 Package natbib Warning: There were undefined citations.
 
-[7] (./finalExam.aux) ) 
+[8] (./finalExam.aux) ) 
 Here is how much of TeX's memory you used:
- 16582 strings out of 492163
- 308762 string characters out of 6129092
- 371199 words of memory out of 5000000
- 20626 multiletter control sequences out of 15000+600000
+ 16583 strings out of 492163
+ 308780 string characters out of 6129092
+ 371201 words of memory out of 5000000
+ 20627 multiletter control sequences out of 15000+600000
  12626 words of font info for 49 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 68i,6n,83p,816b,217s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 68i,6n,83p,1119b,217s stack positions out of 5000i,500n,10000p,200000b,80000s
 <c:/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/
 cm/cmbx10.pfb><c:/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12
 .pfb><c:/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx7.pfb><c:/t
 exlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/20
-19/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb><c:/texlive/2019/texmf-d
-ist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2019/texmf-dist/fonts/
-type1/public/amsfonts/cm/cmr17.pfb><c:/texlive/2019/texmf-dist/fonts/type1/publ
-ic/amsfonts/cm/cmr7.pfb><c:/texlive/2019/texmf-dist/fonts/type1/public/amsfonts
-/cm/cmsy10.pfb><c:/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmti1
-0.pfb><c:/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on finalExam.pdf (7 pages, 157922 bytes).
+19/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2019/texmf-d
+ist/fonts/type1/public/amsfonts/cm/cmr17.pfb><c:/texlive/2019/texmf-dist/fonts/
+type1/public/amsfonts/cm/cmr7.pfb><c:/texlive/2019/texmf-dist/fonts/type1/publi
+c/amsfonts/cm/cmsy10.pfb><c:/texlive/2019/texmf-dist/fonts/type1/public/amsfont
+s/cm/cmti10.pfb><c:/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt
+10.pfb>
+Output written on finalExam.pdf (8 pages, 157090 bytes).
 PDF statistics:
- 99 PDF objects out of 1000 (max. 8388607)
- 62 compressed objects within 1 object stream
+ 98 PDF objects out of 1000 (max. 8388607)
+ 61 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  109 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -251,6 +251,16 @@ def softmax_loss(x, y):
     :return: loss: scalar value of the softmax loss
     :return: dx: gradient with respect to the input matrix x
     '''
+    # shifted_logits = x - np.max(x, axis=1, keepdims=True)
+    # Z = np.sum(np.exp(shifted_logits), axis=1, keepdims=True)
+    # log_probs = shifted_logits - np.log(Z)
+    # probs = np.exp(log_probs)
+    # N = x.shape[0]
+    # loss = -np.sum(log_probs[np.arange(N), y]) / N
+    # dx = probs.copy()
+    # dx[np.arange(N), y] -= 1
+    # dx /= N
+    # return loss, dx
 
     tmp = np.sum(np.exp(x), axis=1)
     loss = -np.sum(x[y.astype(bool)] - log_sum_exp(x))

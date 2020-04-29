@@ -107,8 +107,18 @@ if __name__ == '__main__':
         # --------------------------------------- 1.2 LINEAR REGRESSION --------------------------------------------- #
         ###############################################################################################################
         elif model == "LINEAR_REGRESSION":
-            '''            
-            # ------------------------------- 1.2.1 ROBUST LINEAR CLASSIFIER ---------------------------------------- #
+            # -------------------- 1.2.1 LEAST SQUARES LINEAR REGRESSION WITH L2 REGULARIZATION --------------------- #
+            least_squares_L2_model = LeastSquaresL2()
+            least_squares_L2_model.fit(X, y, lammy=2)
+            y_pred = np.round(least_squares_L2_model.predict(X))
+            tr_error = np.mean(y_pred != y)
+            print(f"Least Squares L2 Training Error: {tr_error}")
+
+            y_pred = np.round(least_squares_L2_model.predict(Xtest))
+            test_error = np.mean(y_pred != ytest)
+            print(f"Least Squares L2 Test Error: {test_error}")
+
+            # ------------------------------- 1.2.2 ROBUST LINEAR CLASSIFIER ---------------------------------------- #
             robust_linear_classifier_model = LinearClassifierRobust(lammy=0)
             robust_linear_classifier_model.fit(X, y)
             y_pred = robust_linear_classifier_model.predict(X)
@@ -118,17 +128,6 @@ if __name__ == '__main__':
             y_pred = robust_linear_classifier_model.predict(Xtest)
             test_error = np.mean(y_pred != ytest)
             print("Robust Linear Classifier test error = {}".format(test_error))
-
-            # -------------------- 1.2.2 LEAST SQUARES LINEAR REGRESSION WITH L2 REGULARIZATION --------------------- #
-            least_squares_L2_model = LeastSquaresL2()
-            least_squares_L2_model.fit(X, y, lammy=2)
-            y_pred = np.round(least_squares_L2_model.predict(X))
-            tr_error = np.mean(y_pred != y)
-            print(f"Least Squares L2 Training Error: {tr_error}")
-
-            y_pred = np.round(least_squares_L2_model.predict(Xtest))
-            test_error = np.mean(y_pred != ytest)
-            print(f"Least Squares L2 Test Error: {test_error}")           
 
             # -------------------------------- 1.2.3 LEAST SQUARES CLASSIFIER --------------------------------------- #
             lammy_m = np.arange(-4, 1, dtype=float)
@@ -203,7 +202,7 @@ if __name__ == '__main__':
                             best_pp = pp
                             best_lammy_mm = lammy_mm
 
-            random_rows = np.random.choice(X.shape[0], size=4500, replace=False)
+            random_rows = np.random.choice(X.shape[0], size=20000, replace=False)
             if best_pp is not None and best_lammy_mm is not None:
                 print(f"Poly Kernel best degree: {best_pp} and best lammy: {10**best_lammy_mm}")
                 poly_kernel = kernelLinearClassifier(kernel_fun=kernel_poly, lammy=10**best_lammy_mm, p=best_pp)
@@ -211,7 +210,6 @@ if __name__ == '__main__':
 
                 test_error = np.mean(poly_kernel.predict(Xtest) != ytest)
                 print(f"Test Error Poly Kernel: {test_error} for p = {best_pp} and lammy = {10**best_lammy_mm}")
-            '''
 
             # ------------------------------ 1.2.4 KERNEL_REGRESSION - RBF ------------------------------------------ #
             lammy_m = np.arange(-4, 1, dtype=float)
@@ -220,10 +218,8 @@ if __name__ == '__main__':
             X_subset = X[random_rows]
             y_subset = y[random_rows]
 
-            best_sigma_mm = None
-            best_lammy_mm = None
-            # lammy_mm = -2.0
-            # sigma_mm = 1.0
+            best_sigma_mm = 1
+            best_lammy_mm = -2
             min_validation_err = 1
 
             if best_sigma_mm is None and best_lammy_mm is None:
@@ -371,28 +367,64 @@ if __name__ == '__main__':
         # https://github.com/MahanFathi/CS231/blob/master/assignment2/cs231n/
 
         elif model == "CNN":
+            # Determine whether the model needs to be trained and/or used for prediction
+            overfit_testing = True
+            training = False
+            predicting = False
+
+            cnn_model_weights_file = os.path.join(os.path.abspath(__file__), '..', 'data', 'cnn_weights.npy')
+
+            # Reinitializing X, y, Xtest and ytest so that the original dimensions of images are preserved
             X, y = train_set
             Xtest, ytest = test_set
+            random_rows = np.random.choice(X.shape[0], size=100, replace=False)
+            X_overfit = X[random_rows]
+            y_overfit = y[random_rows]
+            Y_overfit = Y[random_rows]
 
             cnn_model = BasicCNN(
                 input_dim=(1, 28, 28),
-                epoch=1,
-                minibatch_size=2,
+                epoch=0.2,
+                minibatch_size=100,
                 verbose=1,
                 learning_rate_decay=False
             )
 
-            cnn_model.fit(X, Y)
+            # Overfit on a small sub-sample to ensure that the model and SGD is working as expected
+            if overfit_testing:
+                print("Beginning overfit testing.")
+                cnn_model.epoch = 100
+                cnn_model.fit(X_overfit, Y_overfit)
+                y_pred = cnn_model.predict(X_overfit)
+                overfit_training_error = np.mean(y_pred != Y_overfit)
+                print(f"CNN Overfit training error: {overfit_training_error}")
 
-            # Compute training error
-            yhat = cnn_model.predict(X)
-            tr_error = np.mean(yhat != y)
-            print("Training error = ", tr_error)
+            if training:
+                cnn_model.fit(X, Y)
+                np.save(cnn_model_weights_file, cnn_model.weights)
 
-            # Compute test error
-            yhat = cnn_model.predict(Xtest)
-            test_error = np.mean(yhat != ytest)
-            print("Test error     = ", test_error)
+            # Compute training and test errors by predicting a limited number of rows per iteration to avoid value error
+            if predicting:
+                cnn_model.weights = np.load(cnn_model_weights_file, allow_pickle=True)
+                i_train = 0
+                i_test = 0
+                num_folds = 500
+                yhat_train = np.zeros(y.size)
+                yhat_test = np.zeros(ytest.size)
+                num_rows_train = int(X.shape[0] / num_folds)
+                num_rows_test = int(Xtest.shape[0] / num_folds)
+
+                for fold in range(num_folds):
+                    yhat_train[i_train: i_train + num_rows_train] = cnn_model.predict(X[i_train: i_train + num_rows_train])
+                    yhat_test[i_test: i_test+num_rows_train] = cnn_model.predict(Xtest[i_test: i_test+num_rows_train])
+                    i_train += num_rows_train
+                    i_test += num_rows_test
+
+                tr_error = np.mean(yhat_train != y)
+                print("Training error = ", tr_error)
+
+                test_error = np.mean(yhat_test != ytest)
+                print("Test error     = ", test_error)
 
         else:
             print("Unknown model: %s" % model)
