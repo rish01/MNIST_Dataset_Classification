@@ -31,7 +31,7 @@ if __name__ == '__main__':
     # question = io_args.question\
 
     question = "1"
-    model = "CNN"
+    model = "SVM"
 
     if question == "1":
         with gzip.open(os.path.join('..', 'data', 'mnist.pkl.gz'), 'rb') as f:
@@ -377,15 +377,16 @@ if __name__ == '__main__':
             # Reinitializing X, y, Xtest and ytest so that the original dimensions of images are preserved
             X, y = train_set
             Xtest, ytest = test_set
-            random_rows = np.random.choice(X.shape[0], size=100, replace=False)
+            random_rows = np.random.choice(X.shape[0], size=40, replace=False)
             X_overfit = X[random_rows]
             y_overfit = y[random_rows]
             Y_overfit = Y[random_rows]
 
             cnn_model = BasicCNN(
                 input_dim=(1, 28, 28),
+                lammy=0,
                 epoch=0.2,
-                minibatch_size=100,
+                minibatch_size=40,
                 verbose=1,
                 learning_rate_decay=False
             )

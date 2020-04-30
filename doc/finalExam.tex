@@ -174,7 +174,7 @@ As with the other two questions, please provide any code you write in answering 
 \ans{My MLP implementation in this assignment is essentially a direct carryover from assignment 6 with a small difference except the fact that I'm using Xavier initialization (with a divide by 2 term added in the denominator) to initialize the layer weights and using SGD with momentum. I ran the model with gradient descent only once which achieved a test error of 4.65\%. Also I ran the model with SGD with several inputs of epochs (10, 20, 30, 40) and minibatch sizes (100, 500, 1000, 2500) and observed that epoch of 40 with minibatch size of 2500 worked quite well combined with SGD with momentum yielded a low test-error of only 3.28\%. The training error was only slightly lower at 2.774\%.}
 \subsection{CNN}
 \emph{Three to four sentences describing the particulars of your CNN implementation, highlighting the hyperparameter value choices you made and why.}
-\ans{In order to create the CNN from scratch, I received significant help from Mahan Fathi's Stanford CS231N Assignment 2 repo (\url{https://github.com/MahanFathi/CS231/tree/master/assignment2/cs231n}). However, I do completely understand how the backpropagated gradients are derived using computation graphs and how the forward passes of each layer works. Each CNN layer's (convolutional, relu, max-pool, fully-connected and softmax) forward pass takes input matrix X, filter W and bias B (if applicable) as inputs and produces output layer. Each CNN layer's backward pass obtains the gradient flowing from upstream the network as inputs and computes gradients with respect to input matrix X, filter W and bias B (if applicable). Convolution forward pass is done by sliding the filter across the width and height of each input image matrix (1x28x28). A class is defined which constructs a CNN consisting of convolutional - relu - max-pool - fully-connected - relu - fully connected - softmax and initializes the weight and bias matrices similarly to neural\_net.py except the convolutional layer filter has a 3-dimensional shape. The dimension of each convolutional filter is 3x3 and 5 filters are used.}
+\ans{In order to create the CNN from scratch, I received significant help from Mahan Fathi's Stanford CS231N Assignment 2 repo (\url{https://github.com/MahanFathi/CS231/tree/master/assignment2/cs231n}). However, I do completely understand how the backpropagated gradients are derived using computation graphs and how the forward passes of each layer works. Each CNN layer's (convolutional, relu, max-pool, fully-connected and softmax) forward pass takes input matrix X, filter W and bias B (if applicable) as inputs and produces output layer. Each CNN layer's backward pass obtains the gradient flowing from upstream the network as inputs and computes gradients with respect to input matrix X, filter W and bias B (if applicable). Convolution forward pass is done by sliding the filter across the width and height of each input image matrix (1x28x28). A class is defined which constructs a CNN consisting of convolutional - relu - max-pool - fully-connected - relu - fully connected - softmax and initializes the weight and bias matrices similarly to neural\_net.py except the convolutional layer filter has a 3-dimensional shape. The dimension of each convolutional filter is 5x5 and 8 filters are used. The size of hidden fully-connected layer is 128. I fit the function as is normally done in CPSC340 by flattening the weights and passing them to the stochastic gradient descent function I wrote (findMinSGD). \\ \\ However, my loss term kept exploding with different combinations of SGD learning rate, filter dimensions and number of filter and and I could not achieve a result due to time constraints. Perhaps, flattening the filter matrices for SGD isn't yielding good results in this model.}
 
 \section{Results}
 \begin{center}
@@ -186,7 +186,7 @@ As with the other two questions, please provide any code you write in answering 
  linear regression & 7.6 & 3.62 \\
  SVM & 0.56 & 9.46 \\
  MLP & 0.35 & 3.28\\
- CNN & 0.23 & \\ 
+ CNN & 0.23 & No Result\\ 
  \hline
 \end{tabular}
 \end{center}
@@ -201,8 +201,13 @@ Following are potential sources of differences for each model:
 \item Linear Regression: My kernal RBF linear regression actually performs better than the provided value, but the non-kernel ones did not perform as well which makes sense provided that the data is not contained in a linear sub-space.
 \item SVM: They're likely using better stochastic gradient methods such as Adam to fit the training data, whereas I'm just using SGD with momentum which is not as smart as Adam.
 \item MLP: Initialization, activation technique, and number of hidden layers make a big difference in the performance of MLP models. However, since the provided MLP code in assignment 6 uses sigmoid activations, adding more than 1 layer will cause problem of vanishing gradients. Hence, better error can be achieved by using smarter initialization techniques for weight matrices (area of active research), changing sigmoid activation to relu, and using Adam SGD method for fitting data. 
-\item CNN: I did not actually achieve a result for CNN model unfortunately due to time restrictions, but it makes sense that the provided CNN test error is lower than provided MLP test error as CNN actually learns increasingly complex features of the input image such as lines (horiontal, vertical, diagonal), combinations of lines, and patterns as the number of convolutional layers are increased. If a dog image is input into a MLP trained on MNIST digits, it will still confidently predict a digit value, but CNN won't predict anything confidently because the patterns in the dog image do not match the patterns in the digit images.
+\item CNN: I did not actually achieve a result for CNN model unfortunately due to time restrictions, but it makes sense that the provided CNN test error is lower than provided MLP test error as CNN actually learns increasingly complex features of the input image such as lines (horiontal, vertical, diagonal), combinations of lines, and patterns as the number of convolutional layers are increased. If a dog image is input into a MLP trained on MNIST digits, it will still confidently predict a digit value, but CNN won't predict anything confidently because the patterns in the dog image do not match the patterns in the digit images. 
 }
+}
+
+\section{References}
+\enum{
+\item \url{https://github.com/MahanFathi/CS231/tree/master/assignment2/cs231n}
 }
 
 \newpage

@@ -38,14 +38,14 @@ def unflatten_weights(weights_flat, layer_sizes):
 class BasicCNN:
     """
     A three-layer convolutional network with the following architecture:
-    conv - relu - 2x2 max pool - affine - relu - affine - softmax
+    conv - relu - 2x2 max pool - fully-connected - relu - fully-connected - softmax
     """
 
     def __init__(self,
                  input_dim=(1, 28, 28),
-                 num_filters=5,
-                 filter_size=3,
-                 hidden_dim=100,
+                 num_filters=8,
+                 filter_size=5,
+                 hidden_dim=128,
                  lammy=0.0,
                  conv_filter_stride=1,
                  max_pool_size=2,
@@ -82,8 +82,17 @@ class BasicCNN:
                             [(self.hidden_dim, self.num_classes), (self.num_classes,)]]
 
         # random init
-        scale = 0.001
-        self.params['W1'] = scale * np.random.randn(self.num_filters, C, self.filter_size, self.filter_size)
+        scale = 0.01
+
+        # Initialize the filter matrix with a standard normal distribution
+        self.params['W1'] = np.zeros((self.num_filters, C, self.filter_size * self.filter_size))
+        for f in range(self.num_filters):
+            for c in range(C):
+                size = self.filter_size * self.filter_size
+                self.params['W1'][f, c, :] = scale * np.random.standard_normal(size=size)
+        self.params['W1'] = self.params['W1'].flatten()
+        self.params['W1'] = np.reshape(self.params['W1'], (self.num_filters, C, self.filter_size, self.filter_size))
+
         self.params['b1'] = np.zeros(self.num_filters)
         self.params['W2'] = scale * np.random.randn(first_fc_layer_height, self.hidden_dim)
         self.params['b2'] = np.zeros(self.hidden_dim)
