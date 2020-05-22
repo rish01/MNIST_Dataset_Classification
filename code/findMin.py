@@ -83,7 +83,8 @@ def findMinSGD(funObj, w, epoch, minibatch_size, X, y, verbose=0, learning_rate_
     # Parameters of the Optimization
     num_iterations = X.shape[0]/minibatch_size * epoch
     alpha = 0.001
-    beta = 0.9
+    # beta = 0.9
+    beta = 0
 
     # Obtain the initial random minibatch from the training set
     minibatch_indices = np.random.choice(X.shape[0], size=minibatch_size, replace=False)

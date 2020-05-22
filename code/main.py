@@ -31,7 +31,9 @@ if __name__ == '__main__':
     # question = io_args.question\
 
     question = "1"
-    model = "SVM"
+
+    # ######################################## IMPORTANT INPUT ####################################################### #
+    model = "CNN"   # Input the model name to run here. Choose from KNN, LINEAR REGRESSION, SVM, MLP and CNN
 
     if question == "1":
         with gzip.open(os.path.join('..', 'data', 'mnist.pkl.gz'), 'rb') as f:
